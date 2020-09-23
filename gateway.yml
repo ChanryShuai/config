@@ -1,0 +1,32 @@
+server:
+  port: 8080
+  
+spring:
+  application.name: gateway
+  cloud:
+    gateway:
+      default-filters:
+      - PrefixPath=/
+      routes:
+      #====================
+      - id: flashcard
+        #uri: http://localhost:8081
+        uri: lb://flashcard #==== loadbalance to flashcard service: directs gateway to client service registered with Consul
+        predicates:
+        - Path=/flashcard/**
+        filters:
+        - StripPrefix=1 #gateway strips uri[1], i.e. removes "flashcard" from lb://flashcard, and send the rest of the uri to flashcard.controller
+        - name: CircuitBreaker
+          args:
+            name: flashcard-fallback
+            fallbackUri: forward:/fallback/flashcard #redirects directly to FlashcardDown() method in FallBakcController
+        #====================
+      - id: quiz
+        #uri: http://localhost:8082
+        uri: lb://quiz
+        predicates:
+        - Path=/quiz/**
+        filters:
+        - StripPrefix=1
+        
+        
